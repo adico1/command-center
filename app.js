@@ -78,6 +78,24 @@ function escapeHtml(value) {
     .replaceAll("'", "&#39;");
 }
 
+function interpretAction(text) {
+  const normalized = String(text || "").toLowerCase();
+
+  if (/reboot|restart/.test(normalized)) {
+    return { action: "reboot", note: "Reboot requested by phone." };
+  }
+
+  if (/report|status|health/.test(normalized)) {
+    return { action: "report", note: "Status report requested by phone." };
+  }
+
+  if (/sync|backup|copy/.test(normalized)) {
+    return { action: "sync", note: "Synchronization requested by phone." };
+  }
+
+  return { action: "unknown", note: "Request recognized but no action matched." };
+}
+
 function renderDevices() {
   if (!deviceList) {
     return;
@@ -195,13 +213,14 @@ function setupAskerExperience() {
       return;
     }
 
+    const action = interpretAction(text);
     const request = {
       id: crypto.randomUUID(),
       target: deviceId,
       text,
       token: "phone-request",
       status: "queued",
-      note: "Requested from phone asker.",
+      note: `Phone request parsed as ${action.action}.`,
       createdAt: new Date().toISOString(),
     };
 
@@ -218,7 +237,7 @@ function setupAskerExperience() {
       }
 
       latestCommand.status = "completed";
-      latestCommand.note = `Handled from phone: ${text}`;
+      latestCommand.note = `${action.note} Action: ${action.action}`;
       saveState(latestState);
       renderCommands();
     }, 1000);
