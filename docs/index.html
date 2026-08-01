@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Command Center</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+
+<body>
+  <div class="shell">
+    <header class="hero">
+      <div>
+        <p class="eyebrow">Open and simple</p>
+        <h1>Command Center</h1>
+        <p class="subtitle">
+          A lightweight control panel for sending work requests between devices without relying on vendor apps.
+        </p>
+      </div>
+      <div class="hero-badge">Local-first • No registration required</div>
+    </header>
+
+    <main class="grid">
+      <section class="card">
+        <h2>Register a device</h2>
+        <form id="device-form" class="form-stack">
+          <label>
+            Device name
+            <input id="device-name" name="name" required placeholder="Kitchen hub" />
+          </label>
+          <label>
+            Role
+            <select id="device-role" name="role">
+              <option value="asker">Asker</option>
+              <option value="worker">Worker</option>
+            </select>
+          </label>
+          <label>
+            Capabilities
+            <input id="device-capabilities" name="capabilities" placeholder="reboot,report,sync" />
+          </label>
+          <button type="submit">Save device</button>
+        </form>
+      </section>
+
+      <section class="card">
+        <h2>Send a command</h2>
+        <form id="command-form" class="form-stack">
+          <label>
+            Target device
+            <select id="command-target" name="target"></select>
+          </label>
+          <label>
+            Command
+            <input id="command-text" name="text" required placeholder="reboot" />
+          </label>
+          <label>
+            Verification token
+            <input id="command-token" name="token" placeholder="abc123" />
+          </label>
+          <button type="submit">Dispatch</button>
+        </form>
+      </section>
+
+      <section class="card">
+        <h2>Device registry</h2>
+        <ul id="device-list" class="list"></ul>
+      </section>
+
+      <section class="card">
+        <h2>Command history</h2>
+        <ul id="command-list" class="list"></ul>
+      </section>
+    </main>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+
+</html>
