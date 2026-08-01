@@ -73,6 +73,64 @@ h1 {
   box-shadow: 0 10px 40px rgba(0, 0, 0, 0.18);
 }
 
+.single-column {
+  grid-template-columns: 1fr;
+}
+
+.compact {
+  padding-bottom: 1rem;
+}
+
+.install-banner {
+  border: 1px solid rgba(118, 209, 255, 0.25);
+  border-radius: 16px;
+  padding: 0.95rem;
+  background: rgba(6, 182, 212, 0.1);
+  display: grid;
+  gap: 0.45rem;
+}
+
+.secondary {
+  background: rgba(255, 255, 255, 0.12);
+  color: #f4f7ff;
+}
+
+.hint {
+  color: #8fa7c4;
+  font-size: 0.9rem;
+  margin-top: 0.45rem;
+}
+
+.qr-wrap {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 220px;
+  border-radius: 16px;
+  background: white;
+  padding: 0.75rem;
+}
+
+.qr-wrap canvas {
+  max-width: 100%;
+  height: auto;
+}
+
+textarea {
+  width: 100%;
+  min-height: 120px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+  padding: 0.8rem 0.9rem;
+  background: #0d1728;
+  color: #f4f7ff;
+  resize: vertical;
+}
+
+.compact-list {
+  gap: 0.5rem;
+}
+
 h2 {
   margin-top: 0;
   font-size: 1.1rem;

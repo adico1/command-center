@@ -3,45 +3,52 @@ const commandForm = document.getElementById("command-form");
 const deviceList = document.getElementById("device-list");
 const commandList = document.getElementById("command-list");
 const targetSelect = document.getElementById("command-target");
+const askerForm = document.getElementById("asker-form");
+const deviceBadge = document.getElementById("device-badge");
+const installButton = document.getElementById("install-button");
+const pairDeviceInput = document.getElementById("pair-device-id");
+const qrCodeContainer = document.getElementById("qr-code");
 
-const defaultState = {
-  devices: [
-    {
-      id: crypto.randomUUID(),
-      name: "Desk PC",
-      role: "worker",
-      capabilities: ["reboot", "report", "sync"],
-    },
-    {
-      id: crypto.randomUUID(),
-      name: "Phone Alpha",
-      role: "asker",
-      capabilities: [],
-    },
-  ],
-  commands: [
-    {
-      id: crypto.randomUUID(),
-      target: "Desk PC",
-      text: "report",
-      token: "demo",
-      status: "completed",
-      note: "System snapshot delivered.",
-      createdAt: new Date().toISOString(),
-    },
-  ],
-};
+function createDefaultState() {
+  return {
+    devices: [
+      {
+        id: crypto.randomUUID(),
+        name: "Desk PC",
+        role: "worker",
+        capabilities: ["reboot", "report", "sync"],
+      },
+      {
+        id: crypto.randomUUID(),
+        name: "Phone Alpha",
+        role: "asker",
+        capabilities: [],
+      },
+    ],
+    commands: [
+      {
+        id: crypto.randomUUID(),
+        target: "Desk PC",
+        text: "report",
+        token: "demo",
+        status: "completed",
+        note: "System snapshot delivered.",
+        createdAt: new Date().toISOString(),
+      },
+    ],
+  };
+}
 
 function loadState() {
   const stored = localStorage.getItem("command-center-state");
   if (!stored) {
-    return defaultState;
+    return createDefaultState();
   }
 
   try {
     return JSON.parse(stored);
   } catch {
-    return defaultState;
+    return createDefaultState();
   }
 }
 
@@ -53,11 +60,29 @@ function getState() {
   return loadState();
 }
 
+function getDeviceIdFromUrl() {
+  const params = new URLSearchParams(window.location.search);
+  return params.get("device") || "phone-asker";
+}
+
+function escapeHtml(value) {
+  return String(value)
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#39;");
+}
+
 function renderDevices() {
+  if (!deviceList) {
+    return;
+  }
+
   const state = getState();
   deviceList.innerHTML = "";
 
-  if (!state.devices.length) {
+  if (!state.devices || !state.devices.length) {
     deviceList.innerHTML = '<li>No devices registered yet.</li>';
     return;
   }
@@ -80,6 +105,10 @@ function renderDevices() {
 }
 
 function populateTargets(devices) {
+  if (!targetSelect) {
+    return;
+  }
+
   targetSelect.innerHTML = "";
   devices.forEach((device) => {
     if (device.role === "worker") {
@@ -92,10 +121,14 @@ function populateTargets(devices) {
 }
 
 function renderCommands() {
+  if (!commandList) {
+    return;
+  }
+
   const state = getState();
   commandList.innerHTML = "";
 
-  if (!state.commands.length) {
+  if (!state.commands || !state.commands.length) {
     commandList.innerHTML = '<li>No commands yet.</li>';
     return;
   }
@@ -122,97 +155,189 @@ function renderCommands() {
   commandList.appendChild(fragment);
 }
 
-function escapeHtml(value) {
-  return String(value)
-    .replaceAll("&", "&amp;")
-    .replaceAll("<", "&lt;")
-    .replaceAll(">", "&gt;")
-    .replaceAll('"', "&quot;")
-    .replaceAll("'", "&#39;");
-}
-
-deviceForm.addEventListener("submit", (event) => {
-  event.preventDefault();
-  const state = getState();
-  const formData = new FormData(deviceForm);
-  const name = String(formData.get("name") || "").trim();
-  const role = String(formData.get("role") || "asker");
-  const capabilities = String(formData.get("capabilities") || "")
-    .split(",")
-    .map((cap) => cap.trim())
-    .filter(Boolean);
-
-  if (!name) {
+function installAppPrompt() {
+  if (!installButton) {
     return;
   }
 
-  state.devices.push({
-    id: crypto.randomUUID(),
-    name,
-    role,
-    capabilities,
+  installButton.addEventListener("click", () => {
+    if (window.deferredPrompt) {
+      window.deferredPrompt.prompt();
+    }
   });
 
-  saveState(state);
-  deviceForm.reset();
-  renderDevices();
-  renderCommands();
-});
+  window.addEventListener("beforeinstallprompt", (event) => {
+    event.preventDefault();
+    window.deferredPrompt = event;
+    installButton.style.display = "inline-block";
+  });
+}
 
-commandForm.addEventListener("submit", (event) => {
-  event.preventDefault();
-  const state = getState();
-  const formData = new FormData(commandForm);
-  const targetName = String(formData.get("target") || "").trim();
-  const text = String(formData.get("text") || "").trim();
-  const token = String(formData.get("token") || "").trim();
-
-  if (!targetName || !text) {
+function setupAskerExperience() {
+  if (!askerForm || !deviceBadge) {
     return;
   }
 
-  const targetDevice = state.devices.find((device) => device.name === targetName);
-  if (!targetDevice || targetDevice.role !== "worker") {
-    return;
-  }
+  const deviceId = getDeviceIdFromUrl();
+  deviceBadge.textContent = `Device: ${escapeHtml(deviceId)}`;
 
-  const commandText = text.toLowerCase();
-  const capabilityList = targetDevice.capabilities.map((cap) => cap.toLowerCase());
-  const isSupported = capabilityList.some((cap) => commandText.includes(cap));
+  askerForm.addEventListener("submit", (event) => {
+    event.preventDefault();
+    const state = getState();
+    const formData = new FormData(askerForm);
+    const text = String(formData.get("text") || "").trim();
 
-  const queuedCommand = {
-    id: crypto.randomUUID(),
-    target: targetDevice.name,
-    text,
-    token,
-    status: "queued",
-    note: "Waiting for contract review.",
-    createdAt: new Date().toISOString(),
-  };
-
-  state.commands.push(queuedCommand);
-  saveState(state);
-  renderCommands();
-
-  window.setTimeout(() => {
-    const latestState = getState();
-    const latestCommand = latestState.commands.find((item) => item.id === queuedCommand.id);
-    if (!latestCommand) {
+    if (!text) {
       return;
     }
 
-    if (isSupported && token) {
+    const request = {
+      id: crypto.randomUUID(),
+      target: deviceId,
+      text,
+      token: "phone-request",
+      status: "queued",
+      note: "Requested from phone asker.",
+      createdAt: new Date().toISOString(),
+    };
+
+    state.commands.push(request);
+    saveState(state);
+    renderCommands();
+    askerForm.reset();
+
+    window.setTimeout(() => {
+      const latestState = getState();
+      const latestCommand = latestState.commands.find((item) => item.id === request.id);
+      if (!latestCommand) {
+        return;
+      }
+
       latestCommand.status = "completed";
-      latestCommand.note = `Accepted and executed on ${targetDevice.name}.`;
-    } else {
-      latestCommand.status = "declined";
-      latestCommand.note = `Contract rejected: ${text} is not in the approved capability set.`;
+      latestCommand.note = `Handled from phone: ${text}`;
+      saveState(latestState);
+      renderCommands();
+    }, 1000);
+  });
+}
+
+function updatePairingQr() {
+  if (!pairDeviceInput || !qrCodeContainer || !window.QRCode) {
+    return;
+  }
+
+  const deviceId = (pairDeviceInput.value || "desk-pc").trim() || "desk-pc";
+  const url = new URL("asker.html", window.location.href);
+  url.searchParams.set("device", deviceId);
+
+  qrCodeContainer.innerHTML = "";
+  const canvas = document.createElement("canvas");
+  qrCodeContainer.appendChild(canvas);
+
+  window.QRCode.toCanvas(canvas, url.toString(), { width: 220, margin: 1 }, (error) => {
+    if (error) {
+      qrCodeContainer.innerHTML = `<p class="hint">QR unavailable: ${escapeHtml(error.message || "unknown")}</p>`;
+    }
+  });
+}
+
+if (deviceForm) {
+  deviceForm.addEventListener("submit", (event) => {
+    event.preventDefault();
+    const state = getState();
+    const formData = new FormData(deviceForm);
+    const name = String(formData.get("name") || "").trim();
+    const role = String(formData.get("role") || "asker");
+    const capabilities = String(formData.get("capabilities") || "")
+      .split(",")
+      .map((cap) => cap.trim())
+      .filter(Boolean);
+
+    if (!name) {
+      return;
     }
 
-    saveState(latestState);
-    renderCommands();
-  }, 900);
-});
+    state.devices.push({
+      id: crypto.randomUUID(),
+      name,
+      role,
+      capabilities,
+    });
 
-renderDevices();
-renderCommands();
+    saveState(state);
+    deviceForm.reset();
+    renderDevices();
+    renderCommands();
+  });
+}
+
+if (commandForm) {
+  commandForm.addEventListener("submit", (event) => {
+    event.preventDefault();
+    const state = getState();
+    const formData = new FormData(commandForm);
+    const targetName = String(formData.get("target") || "").trim();
+    const text = String(formData.get("text") || "").trim();
+    const token = String(formData.get("token") || "").trim();
+
+    if (!targetName || !text) {
+      return;
+    }
+
+    const targetDevice = state.devices.find((device) => device.name === targetName);
+    if (!targetDevice || targetDevice.role !== "worker") {
+      return;
+    }
+
+    const commandText = text.toLowerCase();
+    const capabilityList = targetDevice.capabilities.map((cap) => cap.toLowerCase());
+    const isSupported = capabilityList.some((cap) => commandText.includes(cap));
+
+    const queuedCommand = {
+      id: crypto.randomUUID(),
+      target: targetDevice.name,
+      text,
+      token,
+      status: "queued",
+      note: "Waiting for contract review.",
+      createdAt: new Date().toISOString(),
+    };
+
+    state.commands.push(queuedCommand);
+    saveState(state);
+    renderCommands();
+
+    window.setTimeout(() => {
+      const latestState = getState();
+      const latestCommand = latestState.commands.find((item) => item.id === queuedCommand.id);
+      if (!latestCommand) {
+        return;
+      }
+
+      if (isSupported && token) {
+        latestCommand.status = "completed";
+        latestCommand.note = `Accepted and executed on ${targetDevice.name}.`;
+      } else {
+        latestCommand.status = "declined";
+        latestCommand.note = `Contract rejected: ${text} is not in the approved capability set.`;
+      }
+
+      saveState(latestState);
+      renderCommands();
+    }, 900);
+  });
+}
+
+if (pairDeviceInput) {
+  pairDeviceInput.addEventListener("input", updatePairingQr);
+}
+
+function init() {
+  renderDevices();
+  renderCommands();
+  installAppPrompt();
+  setupAskerExperience();
+  updatePairingQr();
+}
+
+init();

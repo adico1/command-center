@@ -23,6 +23,18 @@
 
     <main class="grid">
       <section class="card">
+        <h2>Pair a phone as asker</h2>
+        <form class="form-stack">
+          <label>
+            Device ID
+            <input id="pair-device-id" name="device-id" value="desk-pc" placeholder="desk-pc" />
+          </label>
+          <div id="qr-code" class="qr-wrap" aria-label="Pairing QR code"></div>
+          <p class="hint">Open your phone camera and scan this QR. It will open the asker app for this device ID.</p>
+        </form>
+      </section>
+
+      <section class="card">
         <h2>Register a device</h2>
         <form id="device-form" class="form-stack">
           <label>
@@ -75,6 +87,7 @@
     </main>
   </div>
 
+  <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.0/build/qrcode.min.js"></script>
   <script src="app.js"></script>
 </body>
 

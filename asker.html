@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-title" content="Command Center" />
+  <title>Command Center Ask</title>
+  <link rel="stylesheet" href="styles.css" />
+  <link rel="manifest" href="manifest.json" />
+</head>
+
+<body>
+  <div class="shell">
+    <header class="hero compact">
+      <div>
+        <p class="eyebrow">Phone asker</p>
+        <h1>Ask this device</h1>
+        <p class="subtitle">
+          Use your phone to send plain-language requests to the connected device.
+        </p>
+      </div>
+      <div class="hero-badge" id="device-badge">Device: —</div>
+    </header>
+
+    <main class="grid single-column">
+      <section class="card">
+        <div id="install-banner" class="install-banner">
+          <strong>Install this app for next time</strong>
+          <p>Use the install button below or add it to your home screen.</p>
+          <button id="install-button" class="secondary" type="button">Install app</button>
+        </div>
+      </section>
+
+      <section class="card">
+        <h2>Ask in plain language</h2>
+        <form id="asker-form" class="form-stack">
+          <label>
+            Your request
+            <textarea id="asker-text" name="text" rows="4"
+              placeholder="Please reboot the desk PC and send me a report"></textarea>
+          </label>
+          <button type="submit">Send request</button>
+        </form>
+        <p class="hint">
+          Try phrases such as “reboot”, “report status”, “sync files”, or “check the health”.
+        </p>
+      </section>
+
+      <section class="card">
+        <h2>What happens next</h2>
+        <ul class="list compact-list">
+          <li>Your request is sent to the connected device.</li>
+          <li>The device reviews it and reports back.</li>
+          <li>Install this page to make it feel like a real app.</li>
+        </ul>
+      </section>
+    </main>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+
+</html>

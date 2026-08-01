@@ -1,0 +1,9 @@
+{
+  "name": "Command Center Ask",
+  "short_name": "Ask",
+  "start_url": "./asker.html",
+  "display": "standalone",
+  "background_color": "#07111f",
+  "theme_color": "#07111f",
+  "icons": []
+}
