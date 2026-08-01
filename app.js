@@ -42,13 +42,17 @@ function createDefaultState() {
 function loadState() {
   const stored = localStorage.getItem("command-center-state");
   if (!stored) {
-    return createDefaultState();
+    const initialState = createDefaultState();
+    saveState(initialState);
+    return initialState;
   }
 
   try {
     return JSON.parse(stored);
   } catch {
-    return createDefaultState();
+    const initialState = createDefaultState();
+    saveState(initialState);
+    return initialState;
   }
 }
 
@@ -340,4 +344,19 @@ function init() {
   updatePairingQr();
 }
 
-init();
+if (typeof module !== 'undefined' && module.exports) {
+  module.exports = {
+    createDefaultState,
+    loadState,
+    saveState,
+    getDeviceIdFromUrl,
+    escapeHtml,
+    renderDevices,
+    renderCommands,
+    setupAskerExperience,
+    updatePairingQr,
+    init,
+  };
+} else {
+  init();
+}

@@ -1,0 +1,11 @@
+{
+  "name": "command-center",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "test": "node tests/app.spec.js"
+  },
+  "devDependencies": {
+    "jsdom": "^24.1.0"
+  }
+}
