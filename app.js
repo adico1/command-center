@@ -20,6 +20,12 @@ function createDefaultState() {
       },
       {
         id: crypto.randomUUID(),
+        name: "Server Relay",
+        role: "relay",
+        capabilities: ["reboot", "report", "sync"],
+      },
+      {
+        id: crypto.randomUUID(),
         name: "Phone Alpha",
         role: "asker",
         capabilities: [],
@@ -94,6 +100,37 @@ function interpretAction(text) {
   }
 
   return { action: "unknown", note: "Request recognized but no action matched." };
+}
+
+function routePhoneRequest(state, senderDeviceId, text) {
+  const action = interpretAction(text);
+  const relayDevice = state.devices.find((device) => device.role === "relay") || state.devices[0];
+  const workerDevice = state.devices.find((device) => device.role === "worker") || state.devices[0];
+
+  const request = {
+    id: crypto.randomUUID(),
+    target: relayDevice ? relayDevice.name : "Server Relay",
+    text,
+    token: `from:${senderDeviceId}`,
+    status: "queued",
+    note: `Phone request routed to ${workerDevice ? workerDevice.name : "Desk PC"}.`,
+    createdAt: new Date().toISOString(),
+    route: { from: senderDeviceId, action: action.action },
+  };
+
+  const workerCommand = {
+    id: crypto.randomUUID(),
+    target: workerDevice ? workerDevice.name : "Desk PC",
+    text: `${action.action}: ${text}`,
+    token: `relay:${request.id}`,
+    status: "queued",
+    note: `Forwarded by ${request.target} to ${workerDevice ? workerDevice.name : "Desk PC"}.`,
+    createdAt: new Date().toISOString(),
+    route: { from: senderDeviceId, action: action.action },
+  };
+
+  state.commands.push(request, workerCommand);
+  return { request, workerCommand, action };
 }
 
 function renderDevices() {
@@ -213,31 +250,26 @@ function setupAskerExperience() {
       return;
     }
 
-    const action = interpretAction(text);
-    const request = {
-      id: crypto.randomUUID(),
-      target: deviceId,
-      text,
-      token: "phone-request",
-      status: "queued",
-      note: `Phone request parsed as ${action.action}.`,
-      createdAt: new Date().toISOString(),
-    };
-
-    state.commands.push(request);
+    const routed = routePhoneRequest(state, deviceId, text);
     saveState(state);
     renderCommands();
     askerForm.reset();
 
     window.setTimeout(() => {
       const latestState = getState();
-      const latestCommand = latestState.commands.find((item) => item.id === request.id);
-      if (!latestCommand) {
-        return;
+      const latestRequest = latestState.commands.find((item) => item.id === routed.request.id);
+      const latestWorkerCommand = latestState.commands.find((item) => item.id === routed.workerCommand.id);
+
+      if (latestRequest) {
+        latestRequest.status = "completed";
+        latestRequest.note = `${routed.action.note} Action: ${routed.action.action}`;
       }
 
-      latestCommand.status = "completed";
-      latestCommand.note = `${action.note} Action: ${action.action}`;
+      if (latestWorkerCommand) {
+        latestWorkerCommand.status = "completed";
+        latestWorkerCommand.note = `Executed on ${latestWorkerCommand.target}: ${routed.action.action}`;
+      }
+
       saveState(latestState);
       renderCommands();
     }, 1000);
@@ -370,6 +402,8 @@ if (typeof module !== 'undefined' && module.exports) {
     saveState,
     getDeviceIdFromUrl,
     escapeHtml,
+    interpretAction,
+    routePhoneRequest,
     renderDevices,
     renderCommands,
     setupAskerExperience,

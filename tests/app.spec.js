@@ -42,6 +42,12 @@ function runTests() {
   const saved = app.loadState();
   assert.ok(saved.commands.length >= 2, 'state should persist updates');
   assert.equal(app.getDeviceIdFromUrl(), 'phone-asker');
+
+  const relayState = app.createDefaultState();
+  const routed = app.routePhoneRequest(relayState, 'phone-asker', 'reboot');
+  assert.equal(routed.request.target, 'Server Relay', 'phone requests should be routed via the server relay');
+  assert.equal(routed.workerCommand.target, 'Desk PC', 'the relay should forward the command to the doer PC');
+  assert.equal(routed.request.route.action, 'reboot', 'the relay should preserve the interpreted action');
   console.log('tests passed');
 }
 
